@@ -1764,6 +1764,27 @@
       </div>
     </div>
 
+    <!-- Game Instructions Modal -->
+    <div id="instructions-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content glass-panel bounce-in">
+        <h2 id="inst-title">수련 설명</h2>
+        <div class="modal-body">
+          <div class="modal-icon" id="inst-icon" style="font-size: 3rem; margin: 15px 0;">🎮</div>
+          <p id="inst-desc" style="white-space: pre-line; line-height: 1.6; margin-bottom: 20px; color: #d0cbe5; font-size: 0.95rem; text-align: left;">
+            여기에 게임 설명이 들어갑니다.
+          </p>
+          <div class="reward-box" id="inst-info-box" style="margin-top: 15px;">
+            <span class="reward-label">수련 정보:</span>
+            <span class="reward-value" id="inst-info-val">⏱️ 20초 / 💰 보상 지급</span>
+          </div>
+        </div>
+        <div class="modal-footer" style="display: flex; gap: 10px; justify-content: center; width: 100%; margin-top: 20px;">
+          <button id="inst-cancel-btn" class="btn btn-secondary" style="flex: 1;">뒤로가기</button>
+          <button id="inst-start-btn" class="btn btn-primary btn-glow" style="flex: 1;">수련 시작!</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -2348,6 +2369,49 @@
       playSound('click');
       document.getElementById('result-modal').style.display = 'none';
       showScreen('lobby');
+    }
+
+    function showInstructionsModal(gameId) {
+      playSound('click');
+      const title = document.getElementById('inst-title');
+      const icon = document.getElementById('inst-icon');
+      const desc = document.getElementById('inst-desc');
+      const infoVal = document.getElementById('inst-info-val');
+      const startBtn = document.getElementById('inst-start-btn');
+      
+      const newStartBtn = startBtn.cloneNode(true);
+      startBtn.parentNode.replaceChild(newStartBtn, startBtn);
+
+      if (gameId === 1) {
+        title.innerText = "스피드 짝꿍 설명";
+        icon.innerText = "⚡";
+        desc.innerText = "화면 중앙에 나타나는 마법 구슬의 숫자와 합쳐서 '10'을 만드는 짝꿍 숫자를 아래 선택지 중 가장 빠르게 클릭하세요!\n\n연속해서 정답을 맞추면 '콤보 보너스'가 적용되어 더 많은 골드를 획득할 수 있습니다.\n\n오답을 누르더라도 시간이 차감되지는 않지만, 콤보가 끊어지니 신중하고 빠르게 클릭하세요!";
+        infoVal.innerText = "⏱️ 제한 시간: 20초 | 💰 보상: 점수 비례 골드";
+        newStartBtn.addEventListener('click', () => {
+          document.getElementById('instructions-modal').style.display = 'none';
+          startSpeedGame();
+        });
+      } else if (gameId === 2) {
+        title.innerText = "텐 메모리 설명";
+        icon.innerText = "🎴";
+        desc.innerText = "뒤집혀 있는 16장의 카드 중 '두 장의 카드 합이 정확히 10'이 되는 짝을 맞추세요! (예: 2와 8, 5와 5)\n\n두 카드의 합이 10이 되면 카드가 영구적으로 사라집니다.\n\n제한 시간 내에 모든 카드를 매칭하면 '남은 시간 비례 보너스 골드'를 추가로 받습니다!";
+        infoVal.innerText = "⏱️ 제한 시간: 30초 | 💰 완수 시: 시간 보너스 골드";
+        newStartBtn.addEventListener('click', () => {
+          document.getElementById('instructions-modal').style.display = 'none';
+          startMemoryGame();
+        });
+      } else if (gameId === 3) {
+        title.innerText = "버블 팝 텐 설명";
+        icon.innerText = "🧼";
+        desc.innerText = "화면 아래에서 떠오르는 숫자 버블을 터치하여 장바구니에 담으세요.\n\n장바구니 안의 숫자들의 '합계가 정확히 10'이 되면 버블들이 폭발하며 골드를 획득합니다! (예: 4 + 3 + 3 = 10)\n\n만약 합계가 '10을 초과'하게 되면 장바구니가 터지며 제한 시간 2초가 차감되는 패널티를 받으니 주의하세요!";
+        infoVal.innerText = "⏱️ 제한 시간: 25초 | 💰 보상: 터트린 버블 비례";
+        newStartBtn.addEventListener('click', () => {
+          document.getElementById('instructions-modal').style.display = 'none';
+          startBubbleGame();
+        });
+      }
+      
+      document.getElementById('instructions-modal').style.display = 'flex';
     }
 
     // ==========================================================================
@@ -3199,9 +3263,14 @@
       document.getElementById('lobby-to-hall-btn').addEventListener('click', () => showScreen('hall'));
       document.getElementById('hall-to-lobby-btn').addEventListener('click', () => showScreen('lobby'));
 
-      document.getElementById('play-game1-btn').addEventListener('click', startSpeedGame);
-      document.getElementById('play-game2-btn').addEventListener('click', startMemoryGame);
-      document.getElementById('play-game3-btn').addEventListener('click', startBubbleGame);
+      document.getElementById('play-game1-btn').addEventListener('click', () => showInstructionsModal(1));
+      document.getElementById('play-game2-btn').addEventListener('click', () => showInstructionsModal(2));
+      document.getElementById('play-game3-btn').addEventListener('click', () => showInstructionsModal(3));
+
+      document.getElementById('inst-cancel-btn').addEventListener('click', () => {
+        playSound('click');
+        document.getElementById('instructions-modal').style.display = 'none';
+      });
       
       document.querySelectorAll('.quit-game-btn').forEach(btn => {
         btn.addEventListener('click', () => {
