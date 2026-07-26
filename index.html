@@ -11,6 +11,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbit:wght@400;700;900&display=swap" rel="stylesheet">
   
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  
   <style>
     /* ==========================================================================
        Tenmaker Game - Style Sheet (Vanilla CSS)
@@ -1450,6 +1454,11 @@
           </div>
 
           <button id="start-game-btn" class="btn btn-primary btn-glow">모험 시작하기</button>
+          <div style="margin: 15px 0; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 15px;">
+            <button id="google-login-btn" class="btn btn-secondary" style="width: 100%; font-size: 0.9rem; border: 1px solid rgba(66, 133, 244, 0.4); background: rgba(66, 133, 244, 0.05); color: #8cb4ff;">
+              🔵 Google 계정으로 계속하기
+            </button>
+          </div>
         </div>
       </section>
 
@@ -1464,8 +1473,9 @@
                 <p class="title-text">초보 수습 마법사</p>
               </div>
             </div>
-            <div class="lobby-actions">
-              <button id="lobby-to-hall-btn" class="btn btn-secondary">🏅 명예의 전당</button>
+            <div class="lobby-actions" style="display: flex; flex-direction: column; gap: 8px; align-items: flex-end;">
+              <button id="lobby-to-hall-btn" class="btn btn-secondary btn-sm">🏅 명예의 전당</button>
+              <button id="logout-btn" class="btn btn-xs btn-danger" style="display: none;">로그아웃</button>
             </div>
           </div>
 
@@ -3026,12 +3036,86 @@
       }
     }
 
+    // Firebase Client Authentication
+    let googleProvider = null;
+
+    async function initFirebaseClient() {
+      try {
+        const res = await fetch('/api/get-config');
+        if (res.ok) {
+          const config = await res.json();
+          if (config.apiKey && config.projectId) {
+            firebase.initializeApp(config);
+            googleProvider = new firebase.auth.GoogleAuthProvider();
+            console.log("Firebase Client SDK initialized.");
+
+            // Set up Auth state listener
+            firebase.auth().onAuthStateChanged(async (user) => {
+              if (user) {
+                // User logged in with Google
+                gameState.username = user.displayName || "구글 마법사";
+                localStorage.setItem('tenmaker_user_id', user.uid);
+                localStorage.setItem('tenmaker_username', gameState.username);
+                
+                // Show logout button
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+                
+                // Sync data
+                await syncUserStateFromCloud(user.uid);
+                
+                // Proceed to lobby if on landing page
+                if (screens.landing.classList.contains('active')) {
+                  showScreen('lobby');
+                }
+              } else {
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) logoutBtn.style.display = 'none';
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Firebase client auth setup skipped (operating in local-only mode).', err);
+      }
+    }
+
+    async function syncUserStateFromCloud(userId) {
+      try {
+        const res = await fetch('/api/sync-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'load' })
+        });
+        if (res.ok) {
+          const syncData = await res.json();
+          if (syncData.exists && syncData.data) {
+            gameState.username = syncData.data.username || gameState.username;
+            gameState.avatar = syncData.data.avatar || gameState.avatar;
+            gameState.gold = parseInt(syncData.data.gold) || 0;
+            gameState.clears = parseInt(syncData.data.clears) || 0;
+            
+            localStorage.setItem('tenmaker_username', gameState.username);
+            localStorage.setItem('tenmaker_avatar', gameState.avatar);
+            localStorage.setItem('tenmaker_gold', gameState.gold.toString());
+            localStorage.setItem('tenmaker_clears', gameState.clears.toString());
+            
+            updateGlobalStatsHUD();
+            updateLobbyUI();
+          }
+        }
+      } catch (err) {
+        console.warn("Error loading cloud profile:", err);
+      }
+    }
+
     // ==========================================================================
     // BOOTSTRAPPING & DOM EVENT LISTENERS
     // ==========================================================================
     document.addEventListener('DOMContentLoaded', () => {
       initRankings();
       loadState();
+      initFirebaseClient();
 
       document.getElementById('sound-toggle-btn').addEventListener('click', () => {
         gameState.isMuted = !gameState.isMuted;
@@ -3062,6 +3146,38 @@
         }
         saveState();
         showScreen('lobby');
+      });
+
+      document.getElementById('google-login-btn').addEventListener('click', async () => {
+        playSound('click');
+        if (!googleProvider) {
+          alert("Firebase 설정을 불러오는 중이거나 환경 변수가 아직 입력되지 않았습니다. Vercel 환경 변수가 등록되었는지 확인해 주세요.");
+          return;
+        }
+        try {
+          await firebase.auth().signInWithPopup(googleProvider);
+        } catch (error) {
+          console.error("Google Sign-In Error:", error);
+          alert("로그인 실패: " + error.message);
+        }
+      });
+
+      document.getElementById('logout-btn').addEventListener('click', async () => {
+        playSound('click');
+        try {
+          if (typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+            await firebase.auth().signOut();
+          }
+          // Reset credentials
+          localStorage.removeItem('tenmaker_user_id');
+          localStorage.removeItem('tenmaker_username');
+          localStorage.removeItem('tenmaker_gold');
+          localStorage.removeItem('tenmaker_clears');
+          await loadState();
+          showScreen('landing');
+        } catch (err) {
+          console.error("Logout Error:", err);
+        }
       });
 
       document.getElementById('lobby-to-hall-btn').addEventListener('click', () => showScreen('hall'));
