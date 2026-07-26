@@ -2084,24 +2084,88 @@
       }
     }
 
-    function loadState() {
+    function getOrCreateUserId() {
+      let userId = localStorage.getItem('tenmaker_user_id');
+      if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substring(2, 15) + '_' + Date.now().toString(36);
+        localStorage.setItem('tenmaker_user_id', userId);
+      }
+      return userId;
+    }
+
+    async function loadState() {
+      // 1. Get or create anonymous local ID
+      const userId = getOrCreateUserId();
+
+      // 2. Load basic local settings first (mute state)
+      gameState.isMuted = localStorage.getItem('tenmaker_is_muted') === 'true';
+      document.getElementById('sound-toggle-btn').innerText = gameState.isMuted ? '🔇' : '🔊';
+
+      // 3. Fallback local state loading
       gameState.username = localStorage.getItem('tenmaker_username') || "초보 마법사";
       gameState.avatar = localStorage.getItem('tenmaker_avatar') || "🧙‍♂️";
       gameState.gold = parseInt(localStorage.getItem('tenmaker_gold')) || 0;
       gameState.clears = parseInt(localStorage.getItem('tenmaker_clears')) || 0;
-      gameState.isMuted = localStorage.getItem('tenmaker_is_muted') === 'true';
 
-      document.getElementById('sound-toggle-btn').innerText = gameState.isMuted ? '🔇' : '🔊';
       updateGlobalStatsHUD();
+
+      // 4. Try to sync / load from backend API
+      try {
+        const res = await fetch('/api/sync-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId, action: 'load' })
+        });
+        if (res.ok) {
+          const syncData = await res.json();
+          if (syncData.exists && syncData.data) {
+            // Load and update with database state if it exists
+            gameState.username = syncData.data.username || gameState.username;
+            gameState.avatar = syncData.data.avatar || gameState.avatar;
+            gameState.gold = parseInt(syncData.data.gold) || 0;
+            gameState.clears = parseInt(syncData.data.clears) || 0;
+            
+            // Sync locally to match
+            localStorage.setItem('tenmaker_username', gameState.username);
+            localStorage.setItem('tenmaker_avatar', gameState.avatar);
+            localStorage.setItem('tenmaker_gold', gameState.gold.toString());
+            localStorage.setItem('tenmaker_clears', gameState.clears.toString());
+            
+            updateGlobalStatsHUD();
+          }
+        }
+      } catch (err) {
+        console.warn('Unable to sync state with database on load. Operating locally.', err);
+      }
     }
 
-    function saveState() {
+    async function saveState() {
+      // Save locally first
       localStorage.setItem('tenmaker_username', gameState.username);
       localStorage.setItem('tenmaker_avatar', gameState.avatar);
       localStorage.setItem('tenmaker_gold', gameState.gold.toString());
       localStorage.setItem('tenmaker_clears', gameState.clears.toString());
       localStorage.setItem('tenmaker_is_muted', gameState.isMuted.toString());
       updateGlobalStatsHUD();
+
+      // Sync to cloud database
+      const userId = getOrCreateUserId();
+      try {
+        await fetch('/api/sync-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            username: gameState.username,
+            avatar: gameState.avatar,
+            gold: gameState.gold,
+            clears: gameState.clears,
+            action: 'save'
+          })
+        });
+      } catch (err) {
+        console.warn('Unable to save state to database. Saved locally.', err);
+      }
     }
 
     function updateGlobalStatsHUD() {
@@ -2124,7 +2188,8 @@
       document.querySelector('.profile-card .title-text').innerText = title;
     }
 
-    function recordLeaderboardEntry(type, score, timeRaw = null) {
+    async function recordLeaderboardEntry(type, score, timeRaw = null) {
+      // 1. Record in local fallback
       const listKey = `tenmaker_${type}_rankings`;
       const rankings = JSON.parse(localStorage.getItem(listKey)) || [];
       
@@ -2157,12 +2222,51 @@
       });
       
       localStorage.setItem(listKey, JSON.stringify(updated));
+
+      // 2. Push to remote database
+      try {
+        await fetch('/api/save-score', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type,
+            name: gameState.username,
+            badge: gameState.avatar,
+            score,
+            timeRaw
+          })
+        });
+      } catch (err) {
+        console.warn('Failed to upload score to remote database.', err);
+      }
     }
 
-    function renderLeaderboards() {
-      const goldList = JSON.parse(localStorage.getItem('tenmaker_gold_rankings')) || [];
-      const clearsList = JSON.parse(localStorage.getItem('tenmaker_clears_rankings')) || [];
-      const bossList = JSON.parse(localStorage.getItem('tenmaker_boss_rankings')) || [];
+    async function renderLeaderboards() {
+      // Try to load from remote DB first
+      let goldList = [];
+      let clearsList = [];
+      let bossList = [];
+      let loadedFromDb = false;
+
+      try {
+        const res = await fetch('/api/get-rankings');
+        if (res.ok) {
+          const data = await res.json();
+          goldList = data.gold || [];
+          clearsList = data.clears || [];
+          bossList = data.boss || [];
+          loadedFromDb = true;
+        }
+      } catch (err) {
+        console.warn('Failed to retrieve remote leaderboards. Using local fallback.', err);
+      }
+
+      // If remote failed, load local backup
+      if (!loadedFromDb) {
+        goldList = JSON.parse(localStorage.getItem('tenmaker_gold_rankings')) || [];
+        clearsList = JSON.parse(localStorage.getItem('tenmaker_clears_rankings')) || [];
+        bossList = JSON.parse(localStorage.getItem('tenmaker_boss_rankings')) || [];
+      }
 
       const goldBody = document.getElementById('leaderboard-gold-body');
       const clearsBody = document.getElementById('leaderboard-clears-body');
