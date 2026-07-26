@@ -1,0 +1,3023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tenmaker - 10을 만드는 마법사</title>
+  <meta name="description" content="합이 10이 되는 수학적 연습을 통해 연산력을 기르는 흥미진진한 3가지 미니게임과 강력한 숫자 마왕 보스 레이드를 경험해 보세요!">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Orbit:wght@400;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    /* ==========================================================================
+       Tenmaker Game - Style Sheet (Vanilla CSS)
+       ========================================================================== */
+
+    /* Design Tokens & Theme Variables */
+    :root {
+      --bg-dark: #0a051d;
+      --bg-gradient: linear-gradient(135deg, #09031a 0%, #150b35 50%, #070314 100%);
+      --panel-bg: rgba(20, 10, 45, 0.6);
+      --panel-border: rgba(255, 255, 255, 0.08);
+      --panel-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+      
+      --primary: #9b4dff;
+      --primary-glow: rgba(155, 77, 255, 0.4);
+      --primary-dark: #7026cc;
+
+      --neon-pink: #ff2b85;
+      --neon-pink-glow: rgba(255, 43, 133, 0.4);
+      
+      --neon-cyan: #00f0ff;
+      --neon-cyan-glow: rgba(0, 240, 255, 0.4);
+      
+      --neon-yellow: #ffdf00;
+      --neon-yellow-glow: rgba(255, 223, 0, 0.4);
+      
+      --neon-green: #0cf588;
+      --neon-green-glow: rgba(12, 245, 136, 0.4);
+
+      --danger: #ff3333;
+      
+      --text-light: #f7f5fc;
+      --text-muted: #a59fc4;
+      --font-game: 'Orbit', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+    }
+
+    /* Reset and Base Styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: var(--font-sans);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg-dark);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    #app-container {
+      width: 100%;
+      max-width: 600px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background: rgba(10, 5, 29, 0.4);
+      border-left: 1px solid rgba(255, 255, 255, 0.03);
+      border-right: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary-dark);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    /* Utility Elements */
+    .glass-panel {
+      background: var(--panel-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: var(--panel-glow);
+    }
+
+    /* Header Section */
+    .game-header {
+      height: 70px;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(10, 5, 29, 0.8);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: var(--font-game);
+      font-weight: 900;
+      font-size: 1.5rem;
+      letter-spacing: 2px;
+    }
+
+    .magic-glow {
+      background: linear-gradient(to right, var(--neon-cyan), var(--primary), var(--neon-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glow-cycle 6s linear infinite alternate;
+    }
+
+    .header-stats {
+      display: flex;
+      gap: 15px;
+    }
+
+    .stat-item {
+      font-family: var(--font-game);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .gold-stat {
+      border-color: rgba(255, 223, 0, 0.15);
+      color: var(--neon-yellow);
+    }
+
+    .clear-stat {
+      border-color: rgba(0, 240, 255, 0.15);
+      color: var(--neon-cyan);
+    }
+
+    .audio-controls {
+      display: flex;
+      align-items: center;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 5px;
+      transition: transform 0.2s;
+      color: var(--text-light);
+    }
+
+    .icon-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* Main Screens Layout */
+    #screen-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      position: relative;
+    }
+
+    .game-screen {
+      display: none;
+      width: 100%;
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    .game-screen.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-game);
+      font-weight: 700;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 14px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      box-shadow: 0 4px 15px var(--primary-glow);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px var(--primary-glow);
+      filter: brightness(1.1);
+    }
+
+    .btn-primary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-light);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      border-radius: 10px;
+    }
+
+    .btn-xs {
+      padding: 4px 8px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+    }
+
+    .btn-back {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-muted);
+    }
+
+    .btn-back:hover {
+      background: rgba(255, 33, 33, 0.15);
+      border-color: rgba(255, 33, 33, 0.3);
+      color: #fff;
+    }
+
+    .btn-pink {
+      background: linear-gradient(135deg, var(--neon-pink) 0%, #b80551 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px var(--neon-pink-glow);
+    }
+
+    .btn-pink:hover {
+      box-shadow: 0 6px 18px var(--neon-pink-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-cyan {
+      background: linear-gradient(135deg, var(--neon-cyan) 0%, #00a4b0 100%);
+      color: #0c0728;
+      font-weight: 900;
+      box-shadow: 0 4px 12px var(--neon-cyan-glow);
+    }
+
+    .btn-cyan:hover {
+      box-shadow: 0 6px 18px var(--neon-cyan-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-yellow {
+      background: linear-gradient(135deg, var(--neon-yellow) 0%, #b89800 100%);
+      color: #0c0728;
+      font-weight: 900;
+      box-shadow: 0 4px 12px var(--neon-yellow-glow);
+    }
+
+    .btn-yellow:hover {
+      box-shadow: 0 6px 18px var(--neon-yellow-glow);
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--neon-green);
+      color: #0a051d;
+      font-weight: 900;
+    }
+
+    .btn-glow:hover {
+      animation: pulse-glow 1.5s infinite alternate;
+    }
+
+    /* Screen 1: Landing */
+    #screen-landing {
+      align-items: center;
+      justify-content: center;
+      min-height: 80vh;
+    }
+
+    .intro-box {
+      width: 100%;
+      padding: 40px 30px;
+      text-align: center;
+      max-width: 480px;
+    }
+
+    .game-title {
+      font-family: var(--font-game);
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: -1px;
+      background: linear-gradient(to bottom, #fff 40%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+
+    .game-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 30px;
+    }
+
+    .avatar-selection {
+      margin-bottom: 25px;
+    }
+
+    .selection-label {
+      font-family: var(--font-game);
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+      text-align: left;
+    }
+
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+    }
+
+    .avatar-opt {
+      font-size: 1.8rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .avatar-opt:hover {
+      background: rgba(255, 255, 255, 0.08);
+      transform: scale(1.05);
+    }
+
+    .avatar-opt.active {
+      background: rgba(155, 77, 255, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 0 12px var(--primary-glow);
+      transform: scale(1.1);
+    }
+
+    .input-group {
+      margin-bottom: 30px;
+      text-align: left;
+    }
+
+    .input-group label {
+      font-family: var(--font-game);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--panel-border);
+      padding: 14px 20px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 10px var(--primary-glow);
+    }
+
+    /* Screen 2: Lobby */
+    .lobby-layout {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+    }
+
+    .profile-card {
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .profile-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .avatar-large {
+      font-size: 3rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .name-box h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .title-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: var(--font-game);
+    }
+
+    .section-title {
+      font-family: var(--font-game);
+      font-size: 1.1rem;
+      letter-spacing: 1px;
+      margin-bottom: 15px;
+      color: var(--text-muted);
+      border-left: 3px solid var(--primary);
+      padding-left: 10px;
+    }
+
+    .games-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .game-card {
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .game-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 15px;
+      right: 20px;
+      font-family: var(--font-game);
+      font-size: 0.7rem;
+      font-weight: 900;
+      padding: 4px 10px;
+      border-radius: 20px;
+      letter-spacing: 1px;
+    }
+
+    .card-badge.pink {
+      background: rgba(255, 43, 133, 0.1);
+      color: var(--neon-pink);
+      border: 1px solid rgba(255, 43, 133, 0.2);
+    }
+
+    .card-badge.cyan {
+      background: rgba(0, 240, 255, 0.1);
+      color: var(--neon-cyan);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+    }
+
+    .card-badge.yellow {
+      background: rgba(255, 223, 0, 0.1);
+      color: var(--neon-yellow);
+      border: 1px solid rgba(255, 223, 0, 0.2);
+    }
+
+    .card-icon {
+      font-size: 2.2rem;
+      margin-bottom: 5px;
+    }
+
+    .game-card h4 {
+      font-size: 1.2rem;
+      font-family: var(--font-game);
+      font-weight: 700;
+    }
+
+    .game-card p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .game-time {
+      font-family: var(--font-game);
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    /* Boss Banner Card */
+    .boss-banner {
+      padding: 24px;
+      border: 1px solid rgba(255, 43, 133, 0.15);
+      box-shadow: 0 4px 20px rgba(255, 43, 133, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      background: linear-gradient(135deg, rgba(20, 10, 45, 0.6) 0%, rgba(50, 10, 30, 0.5) 100%);
+    }
+
+    .boss-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .boss-icon {
+      font-size: 3rem;
+      animation: idle-shake 3s infinite ease-in-out;
+    }
+
+    .boss-info h3 {
+      font-family: var(--font-game);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--neon-pink);
+      margin-bottom: 4px;
+    }
+
+    .boss-info p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .boss-action {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-top: 15px;
+    }
+
+    .cost-info {
+      font-family: var(--font-game);
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--neon-yellow);
+    }
+
+    .btn-boss {
+      background: linear-gradient(135deg, var(--neon-pink) 0%, var(--primary-dark) 100%);
+      box-shadow: 0 4px 15px var(--neon-pink-glow);
+    }
+
+    /* Screen 3-5: Mini Game HUD and Layouts */
+    .game-layout {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .game-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 15px;
+    }
+
+    .game-title-hud {
+      font-family: var(--font-game);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .game-timer {
+      font-family: var(--font-game);
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: var(--neon-pink);
+      background: rgba(255, 43, 133, 0.1);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 43, 133, 0.25);
+      animation: countdown-pulse 1s infinite alternate;
+    }
+
+    .score-display {
+      font-family: var(--font-game);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .score-display span {
+      color: var(--neon-cyan);
+      font-size: 1.3rem;
+    }
+
+    /* GAME 1: Speed Match Layout */
+    .speed-match-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 30px;
+      padding: 20px 0;
+      position: relative;
+    }
+
+    .combo-badge {
+      position: absolute;
+      top: -10px;
+      right: 10px;
+      font-family: var(--font-game);
+      font-weight: 900;
+      font-size: 0.95rem;
+      color: #0c0728;
+      background: var(--neon-yellow);
+      padding: 4px 12px;
+      border-radius: 20px;
+      box-shadow: 0 0 10px var(--neon-yellow-glow);
+      transform: rotate(5deg);
+      animation: pop-bounce 0.3s ease-out;
+    }
+
+    .target-number-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .target-bubble {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15) 0%, rgba(155, 77, 255, 0.25) 50%, rgba(112, 38, 204, 0.6) 100%);
+      border: 3px solid var(--primary);
+      box-shadow: 0 0 25px var(--primary-glow);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--font-game);
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: #fff;
+      animation: float-slow 3s infinite ease-in-out alternate;
+    }
+
+    .target-helper {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .choices-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .choice-btn {
+      height: 80px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      color: #fff;
+      font-family: var(--font-game);
+      font-size: 2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .choice-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .choice-btn:active {
+      transform: translateY(1px);
+    }
+
+    .choice-btn.correct {
+      background: var(--neon-green) !important;
+      color: #0c0728 !important;
+      border-color: var(--neon-green) !important;
+      box-shadow: 0 0 20px var(--neon-green-glow) !important;
+    }
+
+    .choice-btn.wrong {
+      background: var(--danger) !important;
+      color: #fff !important;
+      border-color: var(--danger) !important;
+      box-shadow: 0 0 20px rgba(255, 51, 51, 0.4) !important;
+      animation: shake 0.3s ease;
+    }
+
+    /* GAME 2: Memory Card Flip Board */
+    .card-board {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      width: 100%;
+      max-width: 440px;
+      margin: 15px auto;
+      perspective: 800px;
+    }
+
+    .card {
+      aspect-ratio: 3 / 4;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card.matched {
+      transform: rotateY(180deg) scale(0.9);
+      opacity: 0.5;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--font-game);
+      font-weight: 900;
+      font-size: 1.8rem;
+    }
+
+    .card-back {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, #150a30 100%);
+      border: 2px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-back::after {
+      content: "✨";
+      font-size: 1.2rem;
+      opacity: 0.4;
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+    }
+
+    .card.matched .card-front {
+      border-color: var(--neon-green);
+      color: var(--neon-green);
+      box-shadow: 0 0 15px var(--neon-green-glow);
+    }
+
+    /* GAME 3: Bubble Pop Game Area */
+    .bubble-game-area {
+      height: 380px;
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(5, 2, 15, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--font-game);
+      font-size: 1.4rem;
+      font-weight: 900;
+      cursor: pointer;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      box-shadow: inset -5px -5px 12px rgba(0, 0, 0, 0.4), inset 5px 5px 12px rgba(255, 255, 255, 0.4), 0 4px 10px rgba(0, 0, 0, 0.3);
+      animation: float-up linear forwards;
+    }
+
+    /* Float up animation dynamics */
+    @keyframes float-up {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-460px) rotate(360deg);
+        opacity: 0.1;
+      }
+    }
+
+    .basket-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(10, 5, 29, 0.9);
+      border-top: 2px solid var(--panel-border);
+      padding: 10px 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .basket-sum {
+      font-family: var(--font-game);
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    .basket-bubbles {
+      flex: 1;
+      margin: 0 10px;
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      min-height: 35px;
+    }
+
+    .basket-item {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: var(--font-game);
+      font-size: 0.85rem;
+      font-weight: 900;
+      color: white;
+      animation: pop-bounce 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .basket-container.shake {
+      animation: shake 0.4s ease;
+      border-top-color: var(--danger);
+    }
+
+    .basket-container.shake .basket-sum {
+      color: var(--danger);
+    }
+
+    .basket-container.success {
+      border-top-color: var(--neon-green);
+    }
+
+    .basket-container.success .basket-sum {
+      color: var(--neon-green);
+    }
+
+    /* Screen 6: Boss Battle */
+    .boss-layout {
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .boss-stage-indicator {
+      font-family: var(--font-game);
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .boss-timer-bar-container {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      margin: 0 15px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .boss-timer-bar {
+      height: 100%;
+      background: linear-gradient(to right, var(--neon-cyan), var(--primary));
+      width: 100%;
+      transition: width 0.1s linear;
+    }
+
+    .player-hearts {
+      font-size: 1.1rem;
+      display: flex;
+      gap: 4px;
+    }
+
+    .boss-battleground {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .boss-view {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      background: rgba(0, 0, 0, 0.15);
+      padding: 20px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .boss-character {
+      font-size: 4rem;
+      width: 85px;
+      height: 85px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 43, 133, 0.05);
+      border-radius: 50%;
+      border: 2px solid rgba(255, 43, 133, 0.2);
+      box-shadow: 0 0 20px rgba(255, 43, 133, 0.1);
+      animation: float-slow 2.5s infinite ease-in-out alternate;
+    }
+
+    .boss-character.hit {
+      animation: shake 0.3s ease, flash-red 0.3s ease;
+      border-color: var(--danger);
+      background: rgba(255, 0, 0, 0.2);
+    }
+
+    .boss-character.attack {
+      animation: attack-lunge 0.4s ease;
+    }
+
+    .boss-status {
+      flex: 1;
+    }
+
+    .boss-name {
+      font-family: var(--font-game);
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--neon-pink);
+      margin-bottom: 6px;
+    }
+
+    .boss-hp-bar-container {
+      height: 14px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 4px;
+    }
+
+    .boss-hp-bar {
+      height: 100%;
+      background: linear-gradient(to right, var(--danger), #b80000);
+      transition: width 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .boss-hp-text {
+      font-family: var(--font-game);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .boss-question-panel {
+      padding: 25px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(15, 8, 38, 0.7);
+    }
+
+    .math-formula {
+      font-family: var(--font-game);
+      font-size: 2.2rem;
+      font-weight: 900;
+      letter-spacing: 2px;
+      margin-bottom: 15px;
+    }
+
+    .math-blank {
+      color: var(--neon-pink);
+      border-bottom: 3px dashed var(--neon-pink);
+      padding: 0 8px;
+      display: inline-block;
+      min-width: 40px;
+    }
+
+    .input-display {
+      font-family: var(--font-game);
+      font-size: 1.8rem;
+      color: var(--neon-cyan);
+      font-weight: 900;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 8px 30px;
+      border-radius: 12px;
+      display: inline-block;
+      min-width: 100px;
+      border: 1px solid rgba(0, 240, 255, 0.15);
+    }
+
+    /* Calculator Numpad */
+    .numpad-container {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+    }
+
+    .numpad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .numpad-btn {
+      height: 52px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: white;
+      font-family: var(--font-game);
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .numpad-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+
+    .numpad-btn:active {
+      transform: translateY(1px);
+    }
+
+    .numpad-btn.btn-danger {
+      background: rgba(255, 51, 51, 0.15);
+      border-color: rgba(255, 51, 51, 0.3);
+      color: #ff5555;
+    }
+    .numpad-btn.btn-danger:hover {
+      background: var(--danger);
+      color: white;
+    }
+
+    .numpad-btn.btn-success {
+      background: rgba(12, 245, 136, 0.15);
+      border-color: rgba(12, 245, 136, 0.3);
+      color: var(--neon-green);
+    }
+    .numpad-btn.btn-success:hover {
+      background: var(--neon-green);
+      color: #0a051d;
+    }
+
+    /* Screen 7: Hall of Fame */
+    .hall-layout {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .hall-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 15px;
+    }
+
+    .hall-header h2 {
+      font-family: var(--font-game);
+      font-size: 1.3rem;
+      font-weight: 900;
+    }
+
+    .tabs-container {
+      display: flex;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 4px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-game);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 8px 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 8px var(--primary-glow);
+    }
+
+    .leaderboard-container {
+      min-height: 250px;
+    }
+
+    .leaderboard-tab {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .leaderboard-tab.active {
+      display: block;
+    }
+
+    .ranking-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .ranking-table th {
+      font-family: var(--font-game);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 700;
+      padding: 10px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .ranking-table td {
+      padding: 12px 8px;
+      font-size: 0.9rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+    }
+
+    .ranking-table tbody tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .ranking-table tr td:first-child {
+      font-family: var(--font-game);
+      font-weight: 900;
+      color: var(--neon-cyan);
+    }
+
+    /* Rank highlights */
+    .ranking-table tr:nth-child(1) td:first-child {
+      color: #ffd700; /* Gold */
+      font-size: 1.1rem;
+    }
+    .ranking-table tr:nth-child(2) td:first-child {
+      color: #c0c0c0; /* Silver */
+    }
+    .ranking-table tr:nth-child(3) td:first-child {
+      color: #cd7f32; /* Bronze */
+    }
+
+    /* Modal styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(5, 2, 15, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      width: 90%;
+      max-width: 400px;
+      padding: 30px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-content h2 {
+      font-family: var(--font-game);
+      font-size: 1.6rem;
+      font-weight: 900;
+      margin-bottom: 15px;
+      background: linear-gradient(135deg, white, var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .modal-icon {
+      font-size: 3.5rem;
+      margin: 15px 0;
+    }
+
+    .modal-message {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .reward-box {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 10px 20px;
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .reward-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .reward-value {
+      font-family: var(--font-game);
+      font-weight: 900;
+      font-size: 1.1rem;
+      color: var(--neon-yellow);
+    }
+
+    #modal-time-val {
+      color: var(--neon-cyan);
+    }
+
+    .modal-footer {
+      margin-top: 25px;
+    }
+
+    /* Particles Canvas Layer */
+    .particles-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes glow-cycle {
+      0% { filter: drop-shadow(0 0 2px var(--neon-cyan-glow)); }
+      50% { filter: drop-shadow(0 0 8px var(--primary-glow)); }
+      100% { filter: drop-shadow(0 0 2px var(--neon-pink-glow)); }
+    }
+
+    @keyframes float-slow {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    @keyframes idle-shake {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-5px) scale(1.03); }
+    }
+
+    @keyframes countdown-pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.05); box-shadow: 0 0 10px var(--neon-pink-glow); }
+    }
+
+    @keyframes pop-bounce {
+      0% { transform: scale(0.6); }
+      70% { transform: scale(1.15); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+
+    @keyframes flash-red {
+      0%, 100% { filter: none; }
+      50% { filter: drop-shadow(0 0 15px var(--danger)) brightness(1.5); }
+    }
+
+    @keyframes attack-lunge {
+      0%, 100% { transform: translate(0, 0); }
+      40% { transform: translate(15px, -15px) scale(1.1); filter: brightness(1.3); }
+    }
+
+    @keyframes pulse-glow {
+      0% { box-shadow: 0 4px 15px var(--primary-glow); }
+      100% { box-shadow: 0 4px 25px rgba(155, 77, 255, 0.8); }
+    }
+
+    .bounce-in {
+      animation: pop-bounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .screen-shake {
+      animation: shake 0.4s ease;
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <!-- Header / Global Nav -->
+    <header class="game-header">
+      <div class="logo" id="header-logo">
+        <span class="magic-glow">TENMAKER</span>
+      </div>
+      <div class="header-stats" id="header-stats-container" style="display: none;">
+        <div class="stat-item gold-stat">
+          <span class="stat-icon">🪙</span>
+          <span id="player-gold-display">0</span> Gold
+        </div>
+        <div class="stat-item clear-stat">
+          <span class="stat-icon">🏆</span>
+          <span id="player-clears-display">0</span> Clears
+        </div>
+      </div>
+      <div class="audio-controls">
+        <button id="sound-toggle-btn" class="icon-btn" aria-label="음소거 토글">🔊</button>
+      </div>
+    </header>
+
+    <!-- Main Screens Container -->
+    <main id="screen-container">
+      
+      <!-- SCREEN 1: LANDING & PROFILE -->
+      <section id="screen-landing" class="game-screen active">
+        <div class="intro-box glass-panel">
+          <h1 class="game-title">10을 만드는 마법사</h1>
+          <p class="game-subtitle">수학적 영혼의 힘을 모아 10을 만들고 숫자 마왕을 물리쳐라!</p>
+          
+          <div class="avatar-selection">
+            <p class="selection-label">마법 뱃지 선택</p>
+            <div class="avatar-grid">
+              <button class="avatar-opt active" data-avatar="🧙‍♂️">🧙‍♂️</button>
+              <button class="avatar-opt" data-avatar="🔮">🔮</button>
+              <button class="avatar-opt" data-avatar="⚡">⚡</button>
+              <button class="avatar-opt" data-avatar="🔥">🔥</button>
+              <button class="avatar-opt" data-avatar="❄️">❄️</button>
+              <button class="avatar-opt" data-avatar="🌟">🌟</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="username-input">마법사 닉네임 입력</label>
+            <input type="text" id="username-input" maxlength="10" placeholder="기본 마법사" autocomplete="off">
+          </div>
+
+          <button id="start-game-btn" class="btn btn-primary btn-glow">모험 시작하기</button>
+        </div>
+      </section>
+
+      <!-- SCREEN 2: LOBBY -->
+      <section id="screen-lobby" class="game-screen">
+        <div class="lobby-layout">
+          <div class="profile-card glass-panel">
+            <div class="profile-info">
+              <span id="lobby-avatar" class="avatar-large">🧙‍♂️</span>
+              <div class="name-box">
+                <h2 id="lobby-username">위대한 마법사</h2>
+                <p class="title-text">초보 수습 마법사</p>
+              </div>
+            </div>
+            <div class="lobby-actions">
+              <button id="lobby-to-hall-btn" class="btn btn-secondary">🏅 명예의 전당</button>
+            </div>
+          </div>
+
+          <!-- Mini Game List -->
+          <div class="games-section">
+            <h3 class="section-title">연습 미니게임 (수련의 장)</h3>
+            <div class="games-grid">
+              
+              <!-- Game Card 1 -->
+              <div class="game-card glass-panel">
+                <div class="card-badge pink">SPEED</div>
+                <div class="card-icon">⚡</div>
+                <h4>스피드 짝꿍</h4>
+                <p>제시된 수와 합이 10이 되는 짝꿍 숫자를 순발력 있게 고르세요!</p>
+                <div class="card-footer">
+                  <span class="game-time">⏱️ 20초</span>
+                  <button id="play-game1-btn" class="btn btn-sm btn-pink">수련 시작</button>
+                </div>
+              </div>
+
+              <!-- Game Card 2 -->
+              <div class="game-card glass-panel">
+                <div class="card-badge cyan">MEMORY</div>
+                <div class="card-icon">🎴</div>
+                <h4>텐 메모리</h4>
+                <p>뒤집힌 카드 중 합이 정확히 10이 되는 짝을 맞춰 카드를 클리어하세요!</p>
+                <div class="card-footer">
+                  <span class="game-time">⏱️ 30초</span>
+                  <button id="play-game2-btn" class="btn btn-sm btn-cyan">수련 시작</button>
+                </div>
+              </div>
+
+              <!-- Game Card 3 -->
+              <div class="game-card glass-panel">
+                <div class="card-badge yellow">BUBBLE</div>
+                <div class="card-icon">🧼</div>
+                <h4>버블 팝 텐</h4>
+                <p>떠오르는 숫자를 장바구니에 담아 정확히 10을 맞춰 터뜨리세요!</p>
+                <div class="card-footer">
+                  <span class="game-time">⏱️ 25초</span>
+                  <button id="play-game3-btn" class="btn btn-sm btn-yellow">수련 시작</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Boss Challenge Card -->
+          <div class="boss-banner glass-panel">
+            <div class="boss-info">
+              <span class="boss-icon">😈</span>
+              <div>
+                <h3>숫자 마왕 텐 레이드</h3>
+                <p>10문제를 연속으로 맞춰 마왕을 무찌르세요! 랭킹을 기록할 수 있습니다.</p>
+              </div>
+            </div>
+            <div class="boss-action">
+              <div class="cost-info">💰 도전 비용: 50 Gold</div>
+              <button id="boss-raid-btn" class="btn btn-primary btn-boss btn-glow">🔥 보스 도전</button>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SCREEN 3: GAME 1 (Speed Match) -->
+      <section id="screen-game1" class="game-screen">
+        <div class="game-layout glass-panel">
+          <div class="game-header-bar">
+            <button class="btn btn-sm btn-back quit-game-btn">🚪 나가기</button>
+            <div class="game-title-hud">⚡ 스피드 짝꿍</div>
+            <div class="game-timer" id="game1-timer">⏱️ 20</div>
+          </div>
+
+          <div class="game-play-area speed-match-area">
+            <div class="combo-badge" id="game1-combo" style="display:none;">COMBO 2</div>
+            <div class="score-display">점수: <span id="game1-score">0</span></div>
+            
+            <div class="target-number-container">
+              <div class="target-bubble" id="game1-target">7</div>
+              <div class="target-helper">합쳐서 10이 되는 숫자는?</div>
+            </div>
+
+            <div class="choices-grid" id="game1-choices">
+              <button class="choice-btn">1</button>
+              <button class="choice-btn">2</button>
+              <button class="choice-btn">3</button>
+              <button class="choice-btn">4</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 4: GAME 2 (Card Flip 10) -->
+      <section id="screen-game2" class="game-screen">
+        <div class="game-layout glass-panel">
+          <div class="game-header-bar">
+            <button class="btn btn-sm btn-back quit-game-btn">🚪 나가기</button>
+            <div class="game-title-hud">🎴 텐 메모리</div>
+            <div class="game-timer" id="game2-timer">⏱️ 30</div>
+          </div>
+
+          <div class="game-play-area">
+            <div class="score-display">맞춘 페어: <span id="game2-pairs">0</span> / 8</div>
+            <div class="card-board" id="game2-board">
+              <!-- Cards will be injected dynamically -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 5: GAME 3 (Bubble Pop 10) -->
+      <section id="screen-game3" class="game-screen">
+        <div class="game-layout glass-panel">
+          <div class="game-header-bar">
+            <button class="btn btn-sm btn-back quit-game-btn">🚪 나가기</button>
+            <div class="game-title-hud">🧼 버블 팝 텐</div>
+            <div class="game-timer" id="game3-timer">⏱️ 25</div>
+          </div>
+
+          <div class="game-play-area bubble-game-area" id="bubble-area">
+            <!-- Bubbles float up here -->
+            <div class="basket-container">
+              <div class="basket-sum" id="basket-sum-text">장바구니 합계: 0</div>
+              <div class="basket-bubbles" id="basket-bubbles-list">
+                <!-- Selected bubbles icons -->
+              </div>
+              <button id="basket-reset-btn" class="btn btn-xs btn-danger">🗑️ 비우기</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 6: BOSS RAID -->
+      <section id="screen-boss" class="game-screen">
+        <div class="boss-layout glass-panel">
+          <div class="boss-header-bar">
+            <div class="boss-stage-indicator">STAGE: <span id="boss-question-num">1</span> / 10</div>
+            <div class="boss-timer-bar-container">
+              <div class="boss-timer-bar" id="boss-question-timer-bar"></div>
+            </div>
+            <div class="player-hearts" id="boss-player-hearts">
+              ❤️ ❤️ ❤️
+            </div>
+          </div>
+
+          <div class="boss-battleground">
+            <!-- Boss Character View -->
+            <div class="boss-view">
+              <div class="boss-character" id="boss-avatar-img">😈</div>
+              <div class="boss-status">
+                <div class="boss-name">숫자 마왕 TEN</div>
+                <div class="boss-hp-bar-container">
+                  <div class="boss-hp-bar" id="boss-hp-fill" style="width: 100%;"></div>
+                </div>
+                <div class="boss-hp-text"><span id="boss-hp-current">10</span> / 10 HP</div>
+              </div>
+            </div>
+
+            <!-- Math Question Area -->
+            <div class="boss-question-panel glass-panel">
+              <div class="math-formula" id="boss-math-formula">
+                5 + 3 + <span class="math-blank">?</span> = 10
+              </div>
+              <div class="input-display" id="boss-answer-display">_</div>
+            </div>
+
+            <!-- Custom Calculator Numpad -->
+            <div class="numpad-container">
+              <div class="numpad-grid">
+                <button class="numpad-btn" data-val="1">1</button>
+                <button class="numpad-btn" data-val="2">2</button>
+                <button class="numpad-btn" data-val="3">3</button>
+                <button class="numpad-btn" data-val="4">4</button>
+                <button class="numpad-btn" data-val="5">5</button>
+                <button class="numpad-btn" data-val="6">6</button>
+                <button class="numpad-btn" data-val="7">7</button>
+                <button class="numpad-btn" data-val="8">8</button>
+                <button class="numpad-btn" data-val="9">9</button>
+                <button class="numpad-btn btn-danger" data-val="clear">C</button>
+                <button class="numpad-btn" data-val="0">0</button>
+                <button class="numpad-btn btn-success" data-val="enter">OK</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SCREEN 7: HALL OF FAME -->
+      <section id="screen-hall" class="game-screen">
+        <div class="hall-layout glass-panel">
+          <div class="hall-header">
+            <h2>🏅 명예의 전당</h2>
+            <button id="hall-to-lobby-btn" class="btn btn-primary">Lobby</button>
+          </div>
+
+          <div class="tabs-container">
+            <button class="tab-btn active" data-tab="tab-gold">💰 골드 부자 랭킹</button>
+            <button class="tab-btn" data-tab="tab-clears">🏆 미니게임 클리어 랭킹</button>
+            <button class="tab-btn" data-tab="tab-boss">⚡ 보스 클리어타임 랭킹</button>
+          </div>
+
+          <div class="leaderboard-container">
+            <!-- TAB 1: GOLD -->
+            <div id="tab-gold" class="leaderboard-tab active">
+              <table class="ranking-table">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>뱃지</th>
+                    <th>마법사 닉네임</th>
+                    <th>골드</th>
+                    <th>날짜</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-gold-body">
+                  <!-- JS Injected Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TAB 2: CLEARS -->
+            <div id="tab-clears" class="leaderboard-tab">
+              <table class="ranking-table">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>뱃지</th>
+                    <th>마법사 닉네임</th>
+                    <th>클리어 횟수</th>
+                    <th>날짜</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-clears-body">
+                  <!-- JS Injected Rows -->
+                </tbody>
+              </table>
+            </div>
+
+            <!-- TAB 3: BOSS -->
+            <div id="tab-boss" class="leaderboard-tab">
+              <table class="ranking-table">
+                <thead>
+                  <tr>
+                    <th>순위</th>
+                    <th>뱃지</th>
+                    <th>마법사 닉네임</th>
+                    <th>클리어 타임</th>
+                    <th>날짜</th>
+                  </tr>
+                </thead>
+                <tbody id="leaderboard-boss-body">
+                  <!-- JS Injected Rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Global Result Modal -->
+    <div id="result-modal" class="modal-overlay" style="display: none;">
+      <div class="modal-content glass-panel bounce-in">
+        <h2 id="modal-title">수련 완료!</h2>
+        <div class="modal-body">
+          <div class="modal-icon" id="modal-icon">🎉</div>
+          <p id="modal-message">축하합니다! 수련을 통해 골드를 얻었습니다.</p>
+          <div class="reward-box" id="modal-reward-box">
+            <span class="reward-label">보상:</span>
+            <span class="reward-value" id="modal-reward-val">💰 +10 Gold</span>
+          </div>
+          <!-- For boss clear time display -->
+          <div id="modal-time-box" style="display: none;" class="reward-box">
+            <span class="reward-label">클리어 시간:</span>
+            <span class="reward-value" id="modal-time-val">⏱️ 00.00초</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-close-btn" class="btn btn-primary">로비로 이동</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 1. GAME STATE DEFINITION
+    const gameState = {
+      username: "초보 마법사",
+      avatar: "🧙‍♂️",
+      gold: 0,
+      clears: 0,
+      isMuted: false,
+      
+      // Game 1: Speed Match state
+      speedGame: {
+        timer: null,
+        timeLeft: 20,
+        score: 0,
+        combo: 0,
+        maxCombo: 0,
+        target: 0,
+        correctAnswer: 0
+      },
+      
+      // Game 2: Card Memory state
+      memoryGame: {
+        timer: null,
+        timeLeft: 30,
+        cards: [],
+        selectedCards: [],
+        matchedPairs: 0
+      },
+
+      // Game 3: Bubble Pop state
+      bubbleGame: {
+        timer: null,
+        timeLeft: 25,
+        score: 0,
+        basket: [],
+        basketSum: 0,
+        bubbleSpawnInterval: null,
+        activeBubbles: []
+      },
+
+      // Boss Battle state
+      bossBattle: {
+        hp: 10,
+        maxHp: 10,
+        playerHearts: 3,
+        maxHearts: 3,
+        questionIndex: 0,
+        timer: null,
+        questionTimeLeft: 8,
+        correctCount: 0,
+        startTime: 0,
+        clearTime: 0,
+        currentQuestion: {
+          formula: "",
+          answer: 0
+        },
+        currentInput: ""
+      }
+    };
+
+    // 2. AUDIO SYNTHESIZER (Web Audio API)
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playSound(type) {
+      if (gameState.isMuted) return;
+      initAudio();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      switch (type) {
+        case 'click':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+          break;
+
+        case 'correct':
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.15); // G5
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+          break;
+
+        case 'wrong':
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.linearRampToValueAtTime(100, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+
+        case 'pop':
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+          osc.start(now);
+          osc.stop(now + 0.1);
+          break;
+
+        case 'boss_hit':
+          // Exploding sound
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+          
+          const filter = audioCtx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(800, now);
+          
+          osc.disconnect(gain);
+          osc.connect(filter);
+          filter.connect(gain);
+          
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+          osc.start(now);
+          osc.stop(now + 0.5);
+          break;
+
+        case 'boss_attack':
+          // Laser zip
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(900, now);
+          osc.frequency.exponentialRampToValueAtTime(150, now + 0.35);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
+          break;
+
+        case 'victory':
+          // Triumphant arpeggio
+          const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+          notes.forEach((freq, index) => {
+            const subOsc = audioCtx.createOscillator();
+            const subGain = audioCtx.createGain();
+            subOsc.type = 'triangle';
+            subOsc.connect(subGain);
+            subGain.connect(audioCtx.destination);
+            
+            subOsc.frequency.setValueAtTime(freq, now + index * 0.1);
+            subGain.gain.setValueAtTime(0.1, now + index * 0.1);
+            subGain.gain.exponentialRampToValueAtTime(0.01, now + index * 0.1 + 0.3);
+            
+            subOsc.start(now + index * 0.1);
+            subOsc.stop(now + index * 0.1 + 0.3);
+          });
+          break;
+
+        case 'gameover':
+          // Sad descending tune
+          const failNotes = [311.13, 293.66, 261.63, 196.00]; // Eb4, D4, C4, G3
+          failNotes.forEach((freq, index) => {
+            const subOsc = audioCtx.createOscillator();
+            const subGain = audioCtx.createGain();
+            subOsc.type = 'sine';
+            subOsc.connect(subGain);
+            subGain.connect(audioCtx.destination);
+            
+            subOsc.frequency.setValueAtTime(freq, now + index * 0.15);
+            subGain.gain.setValueAtTime(0.12, now + index * 0.15);
+            subGain.gain.exponentialRampToValueAtTime(0.01, now + index * 0.15 + 0.4);
+            
+            subOsc.start(now + index * 0.15);
+            subOsc.stop(now + index * 0.15 + 0.4);
+          });
+          break;
+      }
+    }
+
+    // 3. PARTICLE SYSTEM ENGINE
+    function createParticles(x, y, color, targetContainer) {
+      const canvas = document.createElement('canvas');
+      canvas.classList.add('particles-canvas');
+      targetContainer.appendChild(canvas);
+      
+      const ctx = canvas.getContext('2d');
+      const rect = targetContainer.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+
+      const localX = x - rect.left;
+      const localY = y - rect.top;
+
+      const particles = [];
+      const colors = [color, '#ffffff', '#ffdf00'];
+
+      for (let i = 0; i < 25; i++) {
+        particles.push({
+          x: localX,
+          y: localY,
+          vx: (Math.random() - 0.5) * 8,
+          vy: (Math.random() - 0.5) * 8 - 2,
+          radius: Math.random() * 4 + 2,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          alpha: 1,
+          decay: Math.random() * 0.03 + 0.015
+        });
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let alive = false;
+
+        particles.forEach(p => {
+          if (p.alpha > 0) {
+            alive = true;
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= p.decay;
+            if (p.alpha < 0) p.alpha = 0;
+
+            ctx.save();
+            ctx.globalAlpha = p.alpha;
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+        });
+
+        if (alive) {
+          requestAnimationFrame(animate);
+        } else {
+          canvas.remove();
+        }
+      }
+
+      animate();
+    }
+
+    // 4. NAVIGATION & SCREEN MANAGER
+    const screens = {
+      landing: document.getElementById('screen-landing'),
+      lobby: document.getElementById('screen-lobby'),
+      game1: document.getElementById('screen-game1'),
+      game2: document.getElementById('screen-game2'),
+      game3: document.getElementById('screen-game3'),
+      boss: document.getElementById('screen-boss'),
+      hall: document.getElementById('screen-hall')
+    };
+
+    function showScreen(screenKey) {
+      playSound('click');
+      
+      // Hide all screens
+      Object.values(screens).forEach(screen => {
+        screen.classList.remove('active');
+      });
+      
+      // Show target screen
+      screens[screenKey].classList.add('active');
+
+      // Specific screen loading behaviors
+      if (screenKey === 'lobby') {
+        updateLobbyUI();
+        document.getElementById('header-stats-container').style.display = 'flex';
+      } else if (screenKey === 'landing') {
+        document.getElementById('header-stats-container').style.display = 'none';
+      } else if (screenKey === 'hall') {
+        renderLeaderboards();
+      }
+    }
+
+    // 5. LOCAL STORAGE & RANKINGS
+    const MOCK_GOLD_RANKINGS = [
+      { rank: 1, badge: "⚡", name: "수학귀신 가우스", score: 950, date: "2026.07.25" },
+      { rank: 2, badge: "🧙‍♂️", name: "아인슈타인", score: 820, date: "2026.07.26" },
+      { rank: 3, badge: "🔥", name: "10덕후 마법사", score: 640, date: "2026.07.24" },
+      { rank: 4, badge: "🔮", name: "피타고라스", score: 510, date: "2026.07.26" },
+      { rank: 5, badge: "🌟", name: "수학 영재", score: 430, date: "2026.07.25" },
+      { rank: 6, badge: "❄️", name: "데카르트", score: 320, date: "2026.07.23" },
+      { rank: 7, badge: "🔮", name: "초보매직", score: 180, date: "2026.07.26" }
+    ];
+
+    const MOCK_CLEARS_RANKINGS = [
+      { rank: 1, badge: "⚡", name: "수학귀신 가우스", score: 35, date: "2026.07.25" },
+      { rank: 2, badge: "🧙‍♂️", name: "아인슈타인", score: 28, date: "2026.07.26" },
+      { rank: 3, badge: "🔮", name: "피타고라스", score: 20, date: "2026.07.26" },
+      { rank: 4, badge: "🔥", name: "10덕후 마법사", score: 18, date: "2026.07.24" },
+      { rank: 5, badge: "❄️", name: "데카르트", score: 14, date: "2026.07.23" },
+      { rank: 6, badge: "🌟", name: "수학 영재", score: 11, date: "2026.07.25" },
+      { rank: 7, badge: "🔮", name: "초보매직", score: 6, date: "2026.07.26" }
+    ];
+
+    const MOCK_BOSS_RANKINGS = [
+      { rank: 1, badge: "⚡", name: "수학귀신 가우스", score: "11.45초", timeRaw: 11.45, date: "2026.07.25" },
+      { rank: 2, badge: "🧙‍♂️", name: "아인슈타인", score: "14.28초", timeRaw: 14.28, date: "2026.07.26" },
+      { rank: 3, badge: "🔮", name: "피타고라스", score: "17.65초", timeRaw: 17.65, date: "2026.07.26" },
+      { rank: 4, badge: "🔥", name: "10덕후 마법사", score: "22.34초", timeRaw: 22.34, date: "2026.07.24" },
+      { rank: 5, badge: "🌟", name: "수학 영재", score: "28.91초", timeRaw: 28.91, date: "2026.07.25" }
+    ];
+
+    function initRankings() {
+      if (!localStorage.getItem('tenmaker_gold_rankings')) {
+        localStorage.setItem('tenmaker_gold_rankings', JSON.stringify(MOCK_GOLD_RANKINGS));
+      }
+      if (!localStorage.getItem('tenmaker_clears_rankings')) {
+        localStorage.setItem('tenmaker_clears_rankings', JSON.stringify(MOCK_CLEARS_RANKINGS));
+      }
+      if (!localStorage.getItem('tenmaker_boss_rankings')) {
+        localStorage.setItem('tenmaker_boss_rankings', JSON.stringify(MOCK_BOSS_RANKINGS));
+      }
+    }
+
+    function loadState() {
+      gameState.username = localStorage.getItem('tenmaker_username') || "초보 마법사";
+      gameState.avatar = localStorage.getItem('tenmaker_avatar') || "🧙‍♂️";
+      gameState.gold = parseInt(localStorage.getItem('tenmaker_gold')) || 0;
+      gameState.clears = parseInt(localStorage.getItem('tenmaker_clears')) || 0;
+      gameState.isMuted = localStorage.getItem('tenmaker_is_muted') === 'true';
+
+      document.getElementById('sound-toggle-btn').innerText = gameState.isMuted ? '🔇' : '🔊';
+      updateGlobalStatsHUD();
+    }
+
+    function saveState() {
+      localStorage.setItem('tenmaker_username', gameState.username);
+      localStorage.setItem('tenmaker_avatar', gameState.avatar);
+      localStorage.setItem('tenmaker_gold', gameState.gold.toString());
+      localStorage.setItem('tenmaker_clears', gameState.clears.toString());
+      localStorage.setItem('tenmaker_is_muted', gameState.isMuted.toString());
+      updateGlobalStatsHUD();
+    }
+
+    function updateGlobalStatsHUD() {
+      document.getElementById('player-gold-display').innerText = gameState.gold;
+      document.getElementById('player-clears-display').innerText = gameState.clears;
+    }
+
+    function updateLobbyUI() {
+      document.getElementById('lobby-avatar').innerText = gameState.avatar;
+      document.getElementById('lobby-username').innerText = gameState.username;
+      
+      // Calculate title based on clears
+      let title = "초보 수습 마법사";
+      if (gameState.clears >= 30) title = "신화의 차원수 마도학자";
+      else if (gameState.clears >= 20) title = "대수학 마법 길드 마스터";
+      else if (gameState.clears >= 10) title = "10의 비법을 터득한 현자";
+      else if (gameState.clears >= 5) title = "상급 연산 마도사";
+      else if (gameState.clears >= 2) title = "중급 마법 실습생";
+      
+      document.querySelector('.profile-card .title-text').innerText = title;
+    }
+
+    function recordLeaderboardEntry(type, score, timeRaw = null) {
+      const listKey = `tenmaker_${type}_rankings`;
+      const rankings = JSON.parse(localStorage.getItem(listKey)) || [];
+      
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}.${String(today.getMonth() + 1).padStart(2, '0')}.${String(today.getDate()).padStart(2, '0')}`;
+      
+      const newEntry = {
+        badge: gameState.avatar,
+        name: gameState.username,
+        score: score,
+        date: dateStr
+      };
+      
+      if (type === 'boss') {
+        newEntry.timeRaw = timeRaw;
+      }
+      
+      rankings.push(newEntry);
+      
+      // Sort
+      if (type === 'boss') {
+        rankings.sort((a, b) => a.timeRaw - b.timeRaw);
+      } else {
+        rankings.sort((a, b) => b.score - a.score);
+      }
+      
+      const updated = rankings.slice(0, 10).map((item, idx) => {
+        item.rank = idx + 1;
+        return item;
+      });
+      
+      localStorage.setItem(listKey, JSON.stringify(updated));
+    }
+
+    function renderLeaderboards() {
+      const goldList = JSON.parse(localStorage.getItem('tenmaker_gold_rankings')) || [];
+      const clearsList = JSON.parse(localStorage.getItem('tenmaker_clears_rankings')) || [];
+      const bossList = JSON.parse(localStorage.getItem('tenmaker_boss_rankings')) || [];
+
+      const goldBody = document.getElementById('leaderboard-gold-body');
+      const clearsBody = document.getElementById('leaderboard-clears-body');
+      const bossBody = document.getElementById('leaderboard-boss-body');
+
+      goldBody.innerHTML = goldList.map(r => `
+        <tr>
+          <td>${r.rank}</td>
+          <td>${r.badge}</td>
+          <td>${r.name}</td>
+          <td>💰 ${r.score}</td>
+          <td>${r.date}</td>
+        </tr>
+      `).join('');
+
+      clearsBody.innerHTML = clearsList.map(r => `
+        <tr>
+          <td>${r.rank}</td>
+          <td>${r.badge}</td>
+          <td>${r.name}</td>
+          <td>🏆 ${r.score}회</td>
+          <td>${r.date}</td>
+        </tr>
+      `).join('');
+
+      bossBody.innerHTML = bossList.map(r => `
+        <tr>
+          <td>${r.rank}</td>
+          <td>${r.badge}</td>
+          <td>${r.name}</td>
+          <td>⏱️ ${r.score}</td>
+          <td>${r.date}</td>
+        </tr>
+      `).join('');
+    }
+
+    // SHARED RESULT MODAL
+    function showResultModal(title, icon, message, goldReward, clearTime = null) {
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-icon').innerText = icon;
+      document.getElementById('modal-message').innerText = message;
+      
+      const rewardBox = document.getElementById('modal-reward-box');
+      if (goldReward > 0) {
+        rewardBox.style.display = 'flex';
+        document.getElementById('modal-reward-val').innerText = `💰 +${goldReward} Gold`;
+        gameState.gold += goldReward;
+        saveState();
+        recordLeaderboardEntry('gold', gameState.gold);
+      } else {
+        rewardBox.style.display = 'none';
+      }
+
+      const timeBox = document.getElementById('modal-time-box');
+      if (clearTime !== null) {
+        timeBox.style.display = 'flex';
+        document.getElementById('modal-time-val').innerText = `⏱️ ${clearTime.toFixed(2)}초`;
+      } else {
+        timeBox.style.display = 'none';
+      }
+
+      document.getElementById('result-modal').style.display = 'flex';
+    }
+
+    function closeResultModal() {
+      playSound('click');
+      document.getElementById('result-modal').style.display = 'none';
+      showScreen('lobby');
+    }
+
+    // ==========================================================================
+    // MINI GAME 1: 스피드 짝꿍 (Speed Match)
+    // ==========================================================================
+    function startSpeedGame() {
+      showScreen('game1');
+      const g = gameState.speedGame;
+      g.timeLeft = 20;
+      g.score = 0;
+      g.combo = 0;
+      g.maxCombo = 0;
+      
+      document.getElementById('game1-score').innerText = '0';
+      document.getElementById('game1-timer').innerText = `⏱️ ${g.timeLeft}`;
+      document.getElementById('game1-combo').style.display = 'none';
+      
+      generateSpeedQuestion();
+      
+      g.timer = setInterval(() => {
+        g.timeLeft--;
+        document.getElementById('game1-timer').innerText = `⏱️ ${g.timeLeft}`;
+        
+        if (g.timeLeft <= 0) {
+          endSpeedGame();
+        }
+      }, 1000);
+    }
+
+    function generateSpeedQuestion() {
+      const g = gameState.speedGame;
+      
+      g.target = Math.floor(Math.random() * 9) + 1;
+      g.correctAnswer = 10 - g.target;
+      
+      document.getElementById('game1-target').innerText = g.target;
+
+      const choices = [g.correctAnswer];
+      while (choices.length < 4) {
+        const r = Math.floor(Math.random() * 9) + 1;
+        if (!choices.includes(r)) {
+          choices.push(r);
+        }
+      }
+
+      choices.sort(() => Math.random() - 0.5);
+
+      const container = document.getElementById('game1-choices');
+      container.innerHTML = '';
+      
+      choices.forEach(val => {
+        const btn = document.createElement('button');
+        btn.classList.add('choice-btn');
+        btn.innerText = val;
+        btn.addEventListener('click', (e) => handleSpeedChoice(val, e));
+        container.appendChild(btn);
+      });
+    }
+
+    function handleSpeedChoice(chosenVal, event) {
+      const g = gameState.speedGame;
+      const buttons = document.querySelectorAll('#game1-choices .choice-btn');
+      
+      buttons.forEach(btn => btn.style.pointerEvents = 'none');
+      
+      const rect = event.target.getBoundingClientRect();
+      const clickX = rect.left + rect.width / 2;
+      const clickY = rect.top + rect.height / 2;
+      const parentArea = document.querySelector('.speed-match-area');
+
+      if (chosenVal === g.correctAnswer) {
+        playSound('correct');
+        event.target.classList.add('correct');
+        
+        g.score += 10;
+        g.combo++;
+        if (g.combo > g.maxCombo) {
+          g.maxCombo = g.combo;
+        }
+        
+        const comboBadge = document.getElementById('game1-combo');
+        if (g.combo >= 2) {
+          comboBadge.innerText = `COMBO ${g.combo}`;
+          comboBadge.style.display = 'block';
+        }
+        
+        document.getElementById('game1-score').innerText = g.score;
+        createParticles(clickX, clickY, '#0cf588', parentArea);
+        
+        setTimeout(() => {
+          generateSpeedQuestion();
+        }, 250);
+      } else {
+        playSound('wrong');
+        event.target.classList.add('wrong');
+        
+        g.combo = 0;
+        document.getElementById('game1-combo').style.display = 'none';
+        
+        buttons.forEach(btn => {
+          if (parseInt(btn.innerText) === g.correctAnswer) {
+            btn.classList.add('correct');
+          }
+        });
+
+        createParticles(clickX, clickY, '#ff3333', parentArea);
+        
+        setTimeout(() => {
+          generateSpeedQuestion();
+        }, 450);
+      }
+    }
+
+    function endSpeedGame() {
+      const g = gameState.speedGame;
+      clearInterval(g.timer);
+      
+      const baseGold = Math.floor(g.score / 5);
+      const comboBonus = Math.floor(g.maxCombo * 1.5);
+      const totalGoldEarned = baseGold + comboBonus;
+
+      if (totalGoldEarned > 0) {
+        gameState.clears++;
+        saveState();
+        recordLeaderboardEntry('clears', gameState.clears);
+      }
+
+      playSound(totalGoldEarned > 0 ? 'victory' : 'gameover');
+
+      showResultModal(
+        "수련 완료!",
+        "⚡",
+        `스피드 짝꿍 수련을 끝마쳤습니다!\n획득 점수: ${g.score}점\n최대 콤보: ${g.maxCombo}회`,
+        totalGoldEarned
+      );
+    }
+
+    // ==========================================================================
+    // MINI GAME 2: 텐 메모리 (Card Flip 10)
+    // ==========================================================================
+    function startMemoryGame() {
+      showScreen('game2');
+      const m = gameState.memoryGame;
+      m.timeLeft = 30;
+      m.matchedPairs = 0;
+      m.selectedCards = [];
+
+      document.getElementById('game2-pairs').innerText = '0';
+      document.getElementById('game2-timer').innerText = `⏱️ ${m.timeLeft}`;
+
+      setupMemoryBoard();
+
+      m.timer = setInterval(() => {
+        m.timeLeft--;
+        document.getElementById('game2-timer').innerText = `⏱️ ${m.timeLeft}`;
+        
+        if (m.timeLeft <= 0) {
+          endMemoryGame();
+        }
+      }, 1000);
+    }
+
+    function setupMemoryBoard() {
+      const m = gameState.memoryGame;
+      const board = document.getElementById('game2-board');
+      board.innerHTML = '';
+
+      const numberPairs = [
+        1, 9,
+        2, 8,
+        3, 7,
+        4, 6,
+        5, 5,
+        2, 8,
+        3, 7,
+        4, 6
+      ];
+
+      numberPairs.sort(() => Math.random() - 0.5);
+
+      m.cards = numberPairs.map((value, idx) => {
+        return {
+          id: idx,
+          value: value,
+          isFlipped: false,
+          isMatched: false
+        };
+      });
+
+      m.cards.forEach(card => {
+        const cardEl = document.createElement('div');
+        cardEl.classList.add('card');
+        cardEl.setAttribute('data-id', card.id);
+
+        const cardBack = document.createElement('div');
+        cardBack.classList.add('card-face', 'card-back');
+
+        const cardFront = document.createElement('div');
+        cardFront.classList.add('card-face', 'card-front');
+        cardFront.innerText = card.value;
+
+        cardEl.appendChild(cardBack);
+        cardEl.appendChild(cardFront);
+        
+        cardEl.addEventListener('click', () => handleCardClick(card, cardEl));
+        board.appendChild(cardEl);
+      });
+    }
+
+    function handleCardClick(card, cardEl) {
+      const m = gameState.memoryGame;
+      
+      if (card.isFlipped || card.isMatched || m.selectedCards.length >= 2) return;
+
+      playSound('click');
+      card.isFlipped = true;
+      cardEl.classList.add('flipped');
+      m.selectedCards.push({ card, el: cardEl });
+
+      if (m.selectedCards.length === 2) {
+        const first = m.selectedCards[0];
+        const second = m.selectedCards[1];
+
+        if (first.card.value + second.card.value === 10) {
+          setTimeout(() => {
+            playSound('correct');
+            first.card.isMatched = true;
+            second.card.isMatched = true;
+            first.el.classList.add('matched');
+            second.el.classList.add('matched');
+
+            const rect1 = first.el.getBoundingClientRect();
+            const rect2 = second.el.getBoundingClientRect();
+            const board = document.getElementById('game2-board');
+            
+            createParticles(rect1.left + rect1.width/2, rect1.top + rect1.height/2, '#00f0ff', board);
+            createParticles(rect2.left + rect2.width/2, rect2.top + rect2.height/2, '#00f0ff', board);
+
+            m.matchedPairs++;
+            document.getElementById('game2-pairs').innerText = m.matchedPairs;
+            m.selectedCards = [];
+
+            if (m.matchedPairs === 8) {
+              endMemoryGame();
+            }
+          }, 350);
+        } else {
+          setTimeout(() => {
+            playSound('wrong');
+            first.card.isFlipped = false;
+            second.card.isFlipped = false;
+            first.el.classList.remove('flipped');
+            second.el.classList.remove('flipped');
+            
+            first.el.classList.add('shake');
+            second.el.classList.add('shake');
+            setTimeout(() => {
+              first.el.classList.remove('shake');
+              second.el.classList.remove('shake');
+            }, 300);
+
+            m.selectedCards = [];
+          }, 900);
+        }
+      }
+    }
+
+    function endMemoryGame() {
+      const m = gameState.memoryGame;
+      clearInterval(m.timer);
+
+      document.querySelectorAll('.card').forEach(el => el.style.pointerEvents = 'none');
+
+      const allMatched = m.matchedPairs === 8;
+      const speedBonus = allMatched ? Math.max(0, Math.floor(m.timeLeft * 0.8)) : 0;
+      const totalGoldEarned = (m.matchedPairs * 3) + speedBonus + (allMatched ? 15 : 0);
+
+      if (totalGoldEarned > 0) {
+        gameState.clears++;
+        saveState();
+        recordLeaderboardEntry('clears', gameState.clears);
+      }
+
+      playSound(totalGoldEarned > 0 ? 'victory' : 'gameover');
+
+      showResultModal(
+        allMatched ? "올 클리어!" : "수련 완료!",
+        "🎴",
+        allMatched 
+          ? `텐 메모리 완벽 정복!\n남은 시간: ${m.timeLeft}초\n완료 보너스 획득!` 
+          : `텐 메모리 수련을 마쳤습니다.\n맞춘 짝: ${m.matchedPairs}개`,
+        totalGoldEarned
+      );
+    }
+
+    // ==========================================================================
+    // MINI GAME 3: 버블 팝 텐 (Bubble Pop 10)
+    // ==========================================================================
+    function startBubbleGame() {
+      showScreen('game3');
+      const b = gameState.bubbleGame;
+      b.timeLeft = 25;
+      b.score = 0;
+      b.basket = [];
+      b.basketSum = 0;
+      b.activeBubbles = [];
+
+      document.getElementById('game3-timer').innerText = `⏱️ ${b.timeLeft}`;
+      updateBasketUI();
+
+      const area = document.getElementById('bubble-area');
+      const oldBubbles = area.querySelectorAll('.bubble');
+      oldBubbles.forEach(x => x.remove());
+
+      b.bubbleSpawnInterval = setInterval(spawnBubble, 700);
+
+      b.timer = setInterval(() => {
+        b.timeLeft--;
+        document.getElementById('game3-timer').innerText = `⏱️ ${b.timeLeft}`;
+        
+        if (b.timeLeft <= 0) {
+          endBubbleGame();
+        }
+      }, 1000);
+    }
+
+    function spawnBubble() {
+      if (screens.game3.classList.contains('active') === false) return;
+
+      const b = gameState.bubbleGame;
+      const area = document.getElementById('bubble-area');
+      const rect = area.getBoundingClientRect();
+
+      const bubbleEl = document.createElement('div');
+      bubbleEl.classList.add('bubble');
+
+      const number = Math.floor(Math.random() * 9) + 1; 
+      const bubbleSize = Math.random() * 15 + 40; 
+      const posX = Math.random() * (rect.width - bubbleSize - 20) + 10;
+      const duration = Math.random() * 2.5 + 3.5; 
+
+      bubbleEl.style.width = `${bubbleSize}px`;
+      bubbleEl.style.height = `${bubbleSize}px`;
+      bubbleEl.style.left = `${posX}px`;
+      bubbleEl.style.bottom = `-50px`;
+      bubbleEl.style.animationDuration = `${duration}s`;
+      bubbleEl.innerText = number;
+
+      const hue = (number * 38) % 360;
+      bubbleEl.style.background = `radial-gradient(circle at 30% 30%, hsla(${hue}, 85%, 75%, 0.95), hsla(${hue}, 90%, 45%, 0.8) 70%, hsla(${hue}, 100%, 25%, 0.9) 100%)`;
+      bubbleEl.style.borderColor = `hsla(${hue}, 100%, 65%, 0.5)`;
+
+      bubbleEl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleBubbleClick(number, bubbleEl, e);
+      });
+
+      area.appendChild(bubbleEl);
+      b.activeBubbles.push(bubbleEl);
+
+      setTimeout(() => {
+        if (bubbleEl.parentNode) {
+          bubbleEl.remove();
+          b.activeBubbles = b.activeBubbles.filter(x => x !== bubbleEl);
+        }
+      }, duration * 1000);
+    }
+
+    function handleBubbleClick(number, bubbleEl, event) {
+      const b = gameState.bubbleGame;
+      if (b.basketSum >= 10) return;
+      playSound('pop');
+
+      const rect = bubbleEl.getBoundingClientRect();
+      const popX = rect.left + rect.width / 2;
+      const popY = rect.top + rect.height / 2;
+      const area = document.getElementById('bubble-area');
+
+      createParticles(popX, popY, 'rgba(0, 240, 255, 0.8)', area);
+
+      bubbleEl.remove();
+      b.activeBubbles = b.activeBubbles.filter(x => x !== bubbleEl);
+
+      b.basket.push(number);
+      b.basketSum += number;
+
+      updateBasketUI();
+
+      const basketPanel = document.querySelector('.basket-container');
+
+      if (b.basketSum === 10) {
+        playSound('correct');
+        b.score += 15; 
+        basketPanel.classList.add('success');
+        
+        createParticles(window.innerWidth / 2, popY, '#0cf588', area);
+
+        setTimeout(() => {
+          b.basket = [];
+          b.basketSum = 0;
+          basketPanel.classList.remove('success');
+          updateBasketUI();
+        }, 450);
+      } else if (b.basketSum > 10) {
+        playSound('wrong');
+        basketPanel.classList.add('shake');
+        
+        b.timeLeft = Math.max(0, b.timeLeft - 2);
+        document.getElementById('game3-timer').innerText = `⏱️ ${b.timeLeft}`;
+
+        setTimeout(() => {
+          b.basket = [];
+          b.basketSum = 0;
+          basketPanel.classList.remove('shake');
+          updateBasketUI();
+        }, 600);
+      }
+    }
+
+    function updateBasketUI() {
+      const b = gameState.bubbleGame;
+      document.getElementById('basket-sum-text').innerText = `장바구니 합계: ${b.basketSum}`;
+      
+      const list = document.getElementById('basket-bubbles-list');
+      list.innerHTML = '';
+      
+      b.basket.forEach(num => {
+        const bubble = document.createElement('div');
+        bubble.classList.add('basket-item');
+        bubble.innerText = num;
+        list.appendChild(bubble);
+      });
+    }
+
+    function resetBasket() {
+      playSound('click');
+      const b = gameState.bubbleGame;
+      b.basket = [];
+      b.basketSum = 0;
+      updateBasketUI();
+    }
+
+    function endBubbleGame() {
+      const b = gameState.bubbleGame;
+      clearInterval(b.timer);
+      clearInterval(b.bubbleSpawnInterval);
+
+      b.activeBubbles.forEach(el => el.remove());
+      b.activeBubbles = [];
+
+      const earnedGold = Math.floor(b.score / 3);
+
+      if (earnedGold > 0) {
+        gameState.clears++;
+        saveState();
+        recordLeaderboardEntry('clears', gameState.clears);
+      }
+
+      playSound(earnedGold > 0 ? 'victory' : 'gameover');
+
+      showResultModal(
+        "수련 완료!",
+        "🧼",
+        `버블 팝 텐 수련 완료!\n터뜨린 10 조합 점수: ${b.score}점`,
+        earnedGold
+      );
+    }
+
+    // ==========================================================================
+    // BOSS RAID CHALLENGE
+    // ==========================================================================
+    function startBossRaid() {
+      if (gameState.gold < 50) {
+        playSound('wrong');
+        alert("보스에게 도전하기 위해서는 50 Gold가 필요합니다! 미니게임으로 골드를 더 모아오세요.");
+        return;
+      }
+
+      gameState.gold -= 50;
+      saveState();
+      
+      showScreen('boss');
+
+      const boss = gameState.bossBattle;
+      boss.hp = 10;
+      boss.playerHearts = 3;
+      boss.questionIndex = 0;
+      boss.correctCount = 0;
+      boss.currentInput = "";
+      boss.startTime = performance.now(); 
+      
+      updateBossHeartsUI();
+      updateBossHPUI();
+      
+      nextBossQuestion();
+    }
+
+    function updateBossHeartsUI() {
+      const heartsContainer = document.getElementById('boss-player-hearts');
+      heartsContainer.innerHTML = '❤️ '.repeat(gameState.bossBattle.playerHearts);
+    }
+
+    function updateBossHPUI() {
+      const boss = gameState.bossBattle;
+      const hpFill = document.getElementById('boss-hp-fill');
+      const hpText = document.getElementById('boss-hp-current');
+      
+      const percentage = (boss.hp / boss.maxHp) * 100;
+      hpFill.style.width = `${percentage}%`;
+      hpText.innerText = boss.hp;
+    }
+
+    function generateBossQuestion() {
+      const boss = gameState.bossBattle;
+      const index = boss.questionIndex;
+
+      let formula = "";
+      let answer = 0;
+
+      if (index < 2) {
+        const x = Math.floor(Math.random() * 8) + 1; 
+        answer = 10 - x;
+        formula = `${x} + <span class="math-blank">?</span> = 10`;
+      } else if (index < 4) {
+        const x = Math.floor(Math.random() * 9) + 11; 
+        answer = x - 10;
+        formula = `${x} - <span class="math-blank">?</span> = 10`;
+      } else if (index < 7) {
+        const x = Math.floor(Math.random() * 4) + 1; 
+        const y = Math.floor(Math.random() * 4) + 1; 
+        answer = 10 - (x + y);
+        formula = `${x} + ${y} + <span class="math-blank">?</span> = 10`;
+      } else {
+        const x = Math.floor(Math.random() * 6) + 7; 
+        const y = Math.floor(Math.random() * 5) + 1; 
+        answer = 10 - (x - y);
+        if (answer < 0 || answer > 9) {
+          answer = 3;
+          formula = `5 + 2 + <span class="math-blank">?</span> = 10`;
+        } else {
+          formula = `${x} - ${y} + <span class="math-blank">?</span> = 10`;
+        }
+      }
+
+      boss.currentQuestion = { formula, answer };
+    }
+
+    function nextBossQuestion() {
+      const boss = gameState.bossBattle;
+      clearInterval(boss.timer);
+
+      if (boss.hp <= 0 || boss.playerHearts <= 0 || boss.questionIndex >= 10) {
+        endBossRaid();
+        return;
+      }
+
+      boss.questionIndex++;
+      document.getElementById('boss-question-num').innerText = boss.questionIndex;
+      
+      generateBossQuestion();
+      document.getElementById('boss-math-formula').innerHTML = boss.currentQuestion.formula;
+      
+      boss.currentInput = "";
+      document.getElementById('boss-answer-display').innerText = "_";
+
+      boss.questionTimeLeft = 8;
+      const timerBar = document.getElementById('boss-question-timer-bar');
+      timerBar.style.width = '100%';
+
+      boss.timer = setInterval(() => {
+        boss.questionTimeLeft -= 0.1;
+        const progress = (boss.questionTimeLeft / 8) * 100;
+        timerBar.style.width = `${progress}%`;
+
+        if (boss.questionTimeLeft <= 0) {
+          clearInterval(boss.timer);
+          handleBossTimeout();
+        }
+      }, 100);
+    }
+
+    function handleNumpadInput(val) {
+      playSound('click');
+      const boss = gameState.bossBattle;
+      const display = document.getElementById('boss-answer-display');
+
+      if (val === 'clear') {
+        boss.currentInput = "";
+        display.innerText = "_";
+      } else if (val === 'enter') {
+        submitBossAnswer();
+      } else {
+        if (boss.currentInput.length < 2) {
+          boss.currentInput += val;
+          display.innerText = boss.currentInput;
+        }
+      }
+    }
+
+    function submitBossAnswer() {
+      const boss = gameState.bossBattle;
+      clearInterval(boss.timer);
+
+      const userAnswer = parseInt(boss.currentInput);
+      const correctAnswer = boss.currentQuestion.answer;
+      const bossAvatar = document.getElementById('boss-avatar-img');
+
+      if (userAnswer === correctAnswer) {
+        playSound('boss_hit');
+        boss.hp--;
+        boss.correctCount++;
+        updateBossHPUI();
+        
+        bossAvatar.classList.add('hit');
+        setTimeout(() => {
+          bossAvatar.classList.remove('hit');
+        }, 400);
+      } else {
+        handleWrongAnswerAction();
+      }
+
+      setTimeout(() => {
+        nextBossQuestion();
+      }, 800);
+    }
+
+    function handleBossTimeout() {
+      handleWrongAnswerAction();
+      setTimeout(() => {
+        nextBossQuestion();
+      }, 800);
+    }
+
+    function handleWrongAnswerAction() {
+      playSound('boss_attack');
+      const boss = gameState.bossBattle;
+      boss.playerHearts--;
+      updateBossHeartsUI();
+
+      const bossAvatar = document.getElementById('boss-avatar-img');
+      const appContainer = document.getElementById('app-container');
+      
+      bossAvatar.classList.add('attack');
+      appContainer.classList.add('screen-shake');
+      
+      setTimeout(() => {
+        bossAvatar.classList.remove('attack');
+        appContainer.classList.remove('screen-shake');
+      }, 400);
+    }
+
+    function endBossRaid() {
+      const boss = gameState.bossBattle;
+      clearInterval(boss.timer);
+
+      const endTime = performance.now();
+      boss.clearTime = (endTime - boss.startTime) / 1000; 
+
+      const victory = boss.hp <= 0 && boss.playerHearts > 0;
+      
+      if (victory) {
+        playSound('victory');
+        const victoryGold = 120;
+        
+        const displayTimeStr = `${boss.clearTime.toFixed(2)}초`;
+        recordLeaderboardEntry('boss', displayTimeStr, boss.clearTime);
+        
+        showResultModal(
+          "보스 토벌 성공!",
+          "👑",
+          `숫자 마왕 TEN을 무찌르고 세계의 계산 질서를 수호했습니다!\n체력 소모 없이 완벽 토벌!`,
+          victoryGold,
+          boss.clearTime
+        );
+      } else {
+        playSound('gameover');
+        
+        let message = "숫자 마왕의 일격에 당해 도망쳤습니다... 연습실에서 수련을 더 하세요!";
+        if (boss.playerHearts > 0 && boss.questionIndex >= 10) {
+          message = `시간이 부족하여 마왕이 차원 저편으로 달아났습니다! (체력 감소로 패배)`;
+        }
+
+        showResultModal(
+          "보스 도전 실패",
+          "💀",
+          message,
+          0
+        );
+      }
+    }
+
+    // ==========================================================================
+    // BOOTSTRAPPING & DOM EVENT LISTENERS
+    // ==========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initRankings();
+      loadState();
+
+      document.getElementById('sound-toggle-btn').addEventListener('click', () => {
+        gameState.isMuted = !gameState.isMuted;
+        saveState();
+        document.getElementById('sound-toggle-btn').innerText = gameState.isMuted ? '🔇' : '🔊';
+      });
+
+      document.addEventListener('click', () => {
+        initAudio();
+      }, { once: true });
+
+      const avatarButtons = document.querySelectorAll('.avatar-opt');
+      avatarButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          playSound('click');
+          avatarButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          gameState.avatar = btn.getAttribute('data-avatar');
+        });
+      });
+
+      document.getElementById('start-game-btn').addEventListener('click', () => {
+        const usernameInput = document.getElementById('username-input').value.trim();
+        if (usernameInput) {
+          gameState.username = usernameInput;
+        } else {
+          gameState.username = "익명 마법사";
+        }
+        saveState();
+        showScreen('lobby');
+      });
+
+      document.getElementById('lobby-to-hall-btn').addEventListener('click', () => showScreen('hall'));
+      document.getElementById('hall-to-lobby-btn').addEventListener('click', () => showScreen('lobby'));
+
+      document.getElementById('play-game1-btn').addEventListener('click', startSpeedGame);
+      document.getElementById('play-game2-btn').addEventListener('click', startMemoryGame);
+      document.getElementById('play-game3-btn').addEventListener('click', startBubbleGame);
+      
+      document.querySelectorAll('.quit-game-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          clearInterval(gameState.speedGame.timer);
+          clearInterval(gameState.memoryGame.timer);
+          clearInterval(gameState.bubbleGame.timer);
+          clearInterval(gameState.bubbleGame.bubbleSpawnInterval);
+          
+          showScreen('lobby');
+        });
+      });
+
+      document.getElementById('basket-reset-btn').addEventListener('click', resetBasket);
+
+      document.getElementById('boss-raid-btn').addEventListener('click', startBossRaid);
+
+      const numpadButtons = document.querySelectorAll('.numpad-btn');
+      numpadButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const val = btn.getAttribute('data-val');
+          handleNumpadInput(val);
+        });
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (screens.boss.classList.contains('active')) {
+          if (e.key >= '0' && e.key <= '9') {
+            handleNumpadInput(e.key);
+          } else if (e.key === 'Backspace' || e.key === 'c' || e.key === 'C') {
+            handleNumpadInput('clear');
+          } else if (e.key === 'Enter') {
+            handleNumpadInput('enter');
+          }
+        }
+      });
+
+      const tabButtons = document.querySelectorAll('.tab-btn');
+      tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          playSound('click');
+          tabButtons.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const targetTabId = btn.getAttribute('data-tab');
+          const tabs = document.querySelectorAll('.leaderboard-tab');
+          tabs.forEach(t => t.classList.remove('active'));
+          document.getElementById(targetTabId).classList.add('active');
+        });
+      });
+
+      document.getElementById('modal-close-btn').addEventListener('click', closeResultModal);
+    });
+  </script>
+</body>
+</html>
